@@ -65,6 +65,18 @@ final class TestLogger extends AbstractLogger
     /** @var array<int|string, array<int, array<string, mixed>>> */
     public array $recordsByLevel = [];
 
+    /** @var null|array<string, mixed> */
+    public ?array $levelMap = NULL;
+
+  /**
+   * @param null|array<string, mixed> $levelMap
+   *   Keys are LogLevel::*, values are anything that can be an array key.
+   */
+    public function __construct(?array $levelMap = NULL)
+    {
+      $this->levelMap = $levelMap;
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -135,11 +147,15 @@ final class TestLogger extends AbstractLogger
      */
     public function hasRecordThatPasses(callable $predicate, string $level): bool
     {
-        if (! isset($this->recordsByLevel[$level])) {
+        $mappedLevel = $this->levelMap && array_key_exists($level, $this->levelMap)
+          ? $this->levelMap[$level]
+          : $level;
+
+        if (! isset($this->recordsByLevel[$mappedLevel])) {
             return false;
         }
 
-        foreach ($this->recordsByLevel[$level] as $i => $rec) {
+        foreach ($this->recordsByLevel[$mappedLevel] as $i => $rec) {
             if (\call_user_func($predicate, $rec, $i)) {
                 return true;
             }
